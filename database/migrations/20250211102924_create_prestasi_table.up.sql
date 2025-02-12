@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS data_akademik (
+    id SERIAL PRIMARY KEY,
+    student_id INT NOT NULL UNIQUE,
+    content_link VARCHAR(255) NOT NULL,
+    tipe VARCHAR(100) NOT NULL,
+    createdat TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+);

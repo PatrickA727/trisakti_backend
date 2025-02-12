@@ -1,0 +1,1 @@
+ALTER TABLE data_akademik DROP CONSTRAINT data_akademik_student_id_key;
