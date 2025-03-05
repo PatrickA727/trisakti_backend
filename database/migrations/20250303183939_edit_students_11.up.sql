@@ -1,0 +1,39 @@
+ALTER TABLE students 
+ALTER COLUMN jenis_kelamin SET DEFAULT 'empty',
+ALTER COLUMN jenis_kelamin SET NOT NULL,
+
+ALTER COLUMN tahun_masuk SET DEFAULT 'empty',
+ALTER COLUMN tahun_masuk SET NOT NULL,
+
+ALTER COLUMN semester SET DEFAULT 'empty',
+ALTER COLUMN semester SET NOT NULL,
+
+ALTER COLUMN umur SET DEFAULT 'empty',
+ALTER COLUMN umur SET NOT NULL,
+
+ALTER COLUMN ktp SET DEFAULT 'empty',
+ALTER COLUMN ktp SET NOT NULL,
+
+ALTER COLUMN asal_daerah SET DEFAULT 'empty',
+ALTER COLUMN asal_daerah SET NOT NULL,
+
+ALTER COLUMN agama SET DEFAULT 'empty',
+ALTER COLUMN agama SET NOT NULL,
+
+ALTER COLUMN asal_sekolah SET DEFAULT 'empty',
+ALTER COLUMN asal_sekolah SET NOT NULL,
+
+ALTER COLUMN bahasa_asing SET DEFAULT 'empty',
+ALTER COLUMN bahasa_asing SET NOT NULL,
+
+ALTER COLUMN hobi SET DEFAULT 'empty',
+ALTER COLUMN hobi SET NOT NULL,
+
+ALTER COLUMN media_sosial SET DEFAULT 'empty',
+ALTER COLUMN media_sosial SET NOT NULL,
+
+ALTER COLUMN keterampilan SET DEFAULT 'empty',
+ALTER COLUMN keterampilan SET NOT NULL,
+
+ALTER COLUMN no_telp_usaha SET DEFAULT 'empty',
+ALTER COLUMN no_telp_usaha SET NOT NULL;

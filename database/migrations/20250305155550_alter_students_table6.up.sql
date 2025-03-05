@@ -1,0 +1,1 @@
+ALTER TABLE students ALTER COLUMN foto_path DROP NOT NULL;

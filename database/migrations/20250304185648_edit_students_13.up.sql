@@ -1,0 +1,2 @@
+ALTER TABLE students
+ADD COLUMN link_medsos VARCHAR(255) NOT NULL DEFAULT 'empty';

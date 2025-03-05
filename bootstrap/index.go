@@ -18,7 +18,7 @@ func AppBootstrap() {
 
 	err := godotenv.Load();
 	if err != nil {
-		log.Println("error loading env: ", err);
+		log.Println("error loading env: ", err.Error());
 	}
 
 	PORT := os.Getenv("PORT");
