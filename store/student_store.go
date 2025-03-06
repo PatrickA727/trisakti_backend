@@ -17,13 +17,22 @@ func NewStudentStore (db *gorm.DB) *StudentStore {
     }
 }
 
-func (s *StudentStore) GetAllStudents() ([]models.Students, error) { 
+func (s *StudentStore) GetStudents(offset int, limit int, jurusan string, tahunMasuk string) ([]models.Students, error) { 
     var students []models.Students
 
-    err := s.db.Table("students").Find(&students).Error
-	if err != nil {
-		return nil, err
-	} 
+    query := s.db.Table("students").Select("id", "nama", "jurusan", "tahun_masuk").Order("id DESC").Limit(limit).Offset(offset)
+
+	if jurusan != "" {
+        query = query.Where("jurusan ILIKE ?", "%"+jurusan+"%")
+    }
+    if tahunMasuk != "" {
+        query = query.Where("tahun_masuk ILIKE ?", "%"+tahunMasuk+"%")
+    }
+
+	err := query.Find(&students).Error
+    if err != nil {
+        return nil, err
+    }
 
     return students, nil
 }

@@ -80,12 +80,26 @@ func (c *StudentControllerStruct) GetStudentById(ctx *gin.Context) {
 }
 
 func (c *StudentControllerStruct) GetAllStudents(ctx *gin.Context) {
+	pageStr := ctx.Query("page")
+	jurusan := ctx.Query("jurusan")
+	tahunMasuk := ctx.Query("tahun_masuk")
+	limit := 10
 
-	students, err := c.store.GetAllStudents()
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error1": err.Error(),
+		})
+		return
+	}
+
+	offset := (page - 1) * limit
+
+	students, err := c.store.GetStudents(offset, limit, jurusan, tahunMasuk)
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H {
 			"error": "Error getting students",
-			"message": err,
+			"message": err.Error(),
 		});
 		return
 	} 
