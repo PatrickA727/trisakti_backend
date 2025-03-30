@@ -3,9 +3,12 @@ package bootstrap
 import (
 	"log"
 	"os"
-	"github.com/gin-contrib/cors"
 	"time"
+
+	"github.com/gin-contrib/cors"
+
 	// "github.com/PatrickA727/trisakti-proto/config/app_config"
+	"github.com/PatrickA727/trisakti-proto/controllers/adminController"
 	"github.com/PatrickA727/trisakti-proto/controllers/studentController"
 	"github.com/PatrickA727/trisakti-proto/database"
 	"github.com/PatrickA727/trisakti-proto/routes"
@@ -40,9 +43,12 @@ func AppBootstrap() {
 	}))
 
 	studentStore := store.NewStudentStore(db)
+	adminStore := store.NewAdminStore(db)
 	studentController := studentController.NewController(*studentStore)
+	adminController := adminController.NewAdminController(*adminStore)
 
 	routes.InitRoute(app, *studentController);
+	routes.InitAdminRoute(app, *adminController);
 
 	app.Run(PORT);
 }

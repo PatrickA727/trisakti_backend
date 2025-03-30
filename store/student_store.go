@@ -19,7 +19,7 @@ func NewStudentStore (db *gorm.DB) *StudentStore {
 
 func (s *StudentStore) GetStudents(offset int, limit int, satuan string, tahunMasuk string) ([]models.StudentsPayload, error) { 
     var students []models.StudentsPayload
-
+    
     query := s.db.Table("students").Select("students.id", "students.nama", "students.jurusan", "students.tahun_masuk", "students.no_anggota", "students.semester", "satuan_pendidikan.satuan").
                     Joins("LEFT JOIN satuan_pendidikan ON students.satuan_fk = satuan_pendidikan.id").
                     Order("id DESC").Limit(limit).Offset(offset)
