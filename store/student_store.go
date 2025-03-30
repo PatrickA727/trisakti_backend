@@ -17,16 +17,18 @@ func NewStudentStore (db *gorm.DB) *StudentStore {
     }
 }
 
-func (s *StudentStore) GetStudents(offset int, limit int, jurusan string, tahunMasuk string) ([]models.Students, error) { 
-    var students []models.Students
+func (s *StudentStore) GetStudents(offset int, limit int, satuan string, tahunMasuk string) ([]models.StudentsPayload, error) { 
+    var students []models.StudentsPayload
 
-    query := s.db.Table("students").Select("id", "nama", "jurusan", "tahun_masuk").Order("id DESC").Limit(limit).Offset(offset)
+    query := s.db.Table("students").Select("students.id", "students.nama", "students.jurusan", "students.tahun_masuk", "students.no_anggota", "students.semester", "satuan_pendidikan.satuan").
+                    Joins("LEFT JOIN satuan_pendidikan ON students.satuan_fk = satuan_pendidikan.id").
+                    Order("id DESC").Limit(limit).Offset(offset)
 
-	if jurusan != "" {
-        query = query.Where("jurusan ILIKE ?", "%"+jurusan+"%")
+	if satuan != "" {
+        query = query.Where("satuan_pendidikan.satuan ILIKE ?", satuan+"%")    
     }
     if tahunMasuk != "" {
-        query = query.Where("tahun_masuk ILIKE ?", "%"+tahunMasuk+"%")
+        query = query.Where("students.tahun_masuk ILIKE ?",  tahunMasuk+"%")
     }
 
 	err := query.Find(&students).Error
@@ -56,7 +58,11 @@ func (s *StudentStore) RegisterStudentAcademics(tx *gorm.DB, data_akademik model
 func (s *StudentStore) FindStudentByID(id int) (*models.Students, error) {
     var student models.Students
 
-    result := s.db.Table("students").Where("id = ?", id).Find(&student)
+    result := s.db.Table("students").
+        Select("students.*, satuan_pendidikan.satuan").
+        Joins("LEFT JOIN satuan_pendidikan ON students.satuan_fk = satuan_pendidikan.id").
+        Where("students.id = ?", id).
+        First(&student)
 	if result.RowsAffected == 0 {
 		return nil, fmt.Errorf("student not found")
 	}
@@ -65,4 +71,15 @@ func (s *StudentStore) FindStudentByID(id int) (*models.Students, error) {
 	}
 
     return &student, nil
+}
+
+func (s *StudentStore) GetSatuan() ([]models.SatuanPendidikan, error) {
+    var satuan_list []models.SatuanPendidikan
+
+    err := s.db.Table("satuan_pendidikan").Find(&satuan_list).Error
+    if err != nil {
+        return nil, err
+    }
+
+    return satuan_list, nil
 }

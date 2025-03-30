@@ -31,7 +31,7 @@ func AppBootstrap() {
 	app := gin.Default();	// Returns gin default engine, similar to express app in js 
 	
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://9eac-118-99-106-104.ngrok-free.app", "https://4f82-182-253-155-4.ngrok-free.app", "http://localhost:5173"}, // Change to specific ngrok URL in production
+		AllowOrigins:     []string{"https://9eac-118-99-106-104.ngrok-free.app", "https://da35-103-3-220-123.ngrok-free.app", "http://localhost:5173"}, // Change to specific ngrok URL in production
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
 		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},

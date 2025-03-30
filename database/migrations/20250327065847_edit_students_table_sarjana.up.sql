@@ -1,0 +1,2 @@
+ALTER TABLE students
+ADD COLUMN sarjana VARCHAR(100);

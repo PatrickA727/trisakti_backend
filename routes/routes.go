@@ -14,4 +14,5 @@ func InitRoute(app *gin.Engine, c studentController.StudentControllerStruct) {
 	api.POST("/register-student", c.RegisterStudent);
 	api.PATCH("/update-student-data/:id", c.UpdateStudentData);
 	api.DELETE("/delete-student/:id", c.DeleteStudent);
+	api.GET("/get-satuan", c.GetAllSatuan);
 }
