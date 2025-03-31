@@ -43,12 +43,12 @@ func AppBootstrap() {
 	}))
 
 	studentStore := store.NewStudentStore(db)
-	adminStore := store.NewAdminStore(db)
+	AdminStore := store.NewAdminStore(db)
 	studentController := studentController.NewController(*studentStore)
-	adminController := adminController.NewAdminController(*adminStore)
+	adminController := adminController.NewAdminController(*AdminStore)
 
 	routes.InitRoute(app, *studentController);
-	routes.InitAdminRoute(app, *adminController);
+	routes.InitAdminRoute(app, adminController);
 
 	app.Run(PORT);
 }

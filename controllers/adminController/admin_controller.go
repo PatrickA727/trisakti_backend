@@ -3,7 +3,8 @@ package adminController
 import (
 	"errors"
 	"net/http"
-
+	"os"
+	"time"
 	"github.com/PatrickA727/trisakti-proto/models"
 	"github.com/PatrickA727/trisakti-proto/store"
 	"github.com/PatrickA727/trisakti-proto/utils"
@@ -12,12 +13,12 @@ import (
 )
 
 type AdminControllerStruct struct {
-	store store.AdminStore
+	Store store.AdminStore
 }
 
 func NewAdminController (store store.AdminStore) *AdminControllerStruct {
 	return &AdminControllerStruct{
-		store: store,
+		Store: store,
 	}
 }
 
@@ -31,7 +32,74 @@ func (c *AdminControllerStruct) Login(ctx *gin.Context) {
 		return
 	}
 
+	payload.Username = utils.SanitizeInput(payload.Username)
 
+	a, err := c.Store.GetAdminByUname(payload.Username)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": "incorrect password or email",
+		})
+		return
+	}
+
+	if !utils.ComparePasswords(a.Password, []byte(payload.Password)) {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": "incorrect password or email",
+		})
+		return
+	}
+
+	secret := []byte(os.Getenv("JWT_SECRET"))
+	token, err := utils.CreateJWT(secret, a.ID)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	refToken, err := utils.CreateRefreshJWT(secret, a.ID) 
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = c.Store.CreateSession(models.Sessions{
+		AdminID: a.ID,
+		RefreshToken: refToken,
+	})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    token,
+		Expires:  time.Now().Add(600 * time.Second),
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refToken,
+		Expires:  time.Now().Add(30 * 24 * time.Hour),
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	})
+	
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "user logged in",
+	})
 }
 
 func (c *AdminControllerStruct) RegisterAdmin(ctx *gin.Context) {
@@ -44,7 +112,7 @@ func (c *AdminControllerStruct) RegisterAdmin(ctx *gin.Context) {
 		return
 	}
 
-	_, err := c.store.GetAdminByUname(payload.Username)
+	_, err := c.Store.GetAdminByUname(payload.Username)
 	if err == nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
 			"error": "username already exists",
@@ -67,7 +135,7 @@ func (c *AdminControllerStruct) RegisterAdmin(ctx *gin.Context) {
 		return
 	}
 
-	err = c.store.RegisterNewAdmin(models.AdminUser{
+	err = c.Store.RegisterNewAdmin(models.AdminUser{
 		Username: payload.Username,
 		Password: hashedPass,
 	})
@@ -80,5 +148,75 @@ func (c *AdminControllerStruct) RegisterAdmin(ctx *gin.Context) {
 	
 	ctx.JSON(http.StatusOK, gin.H {
 		"message": "user created",
+	})
+}
+
+func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
+	token, err := ctx.Cookie("refresh_token")
+    if err != nil {
+        if errors.Is(err, http.ErrNoCookie) {
+            ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "no cookie",
+			})
+            return 
+        }
+
+        ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": err.Error(),
+		})
+        return 
+    }
+
+	userID, exists := ctx.Get("UserID")
+	if !exists {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "no user in context",
+		})
+		return
+	}
+
+	intID, ok := userID.(int)
+	if !ok {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "incorrect data type for id",
+		})
+		return
+	} 
+
+	err = c.Store.RevokeSession(models.Sessions{
+		AdminID: intID,
+		RefreshToken: token,
+	})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+        Path:     "/",
+        HttpOnly: true,	
+        Expires:  time.Unix(0, 0), 
+        MaxAge:   -1,             
+        Secure:   true,  
+		SameSite: http.SameSiteNoneMode,
+	})
+	
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+        Path:     "/",
+        HttpOnly: true,	
+        Expires:  time.Unix(0, 0), 
+        MaxAge:   -1,             
+        Secure:   true, 
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "logged out",
 	})
 }
