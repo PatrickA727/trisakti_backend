@@ -80,7 +80,7 @@ func (c *AdminControllerStruct) Login(ctx *gin.Context) {
 	http.SetCookie(ctx.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
-		Expires:  time.Now().Add(600 * time.Second),
+		Expires:  time.Now().Add(30 * time.Second),
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
@@ -218,5 +218,83 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "logged out",
+	})
+}
+
+func (c *AdminControllerStruct) AuthCheck(ctx *gin.Context) {
+	token := utils.GetTokenFromCookie(ctx)
+
+	validToken, err := utils.ValidateJWT(token)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+
+	if !validToken.Valid {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Authorized",
+	})
+}
+
+func (c *AdminControllerStruct) RenewAccessToken(ctx *gin.Context) {
+	token, err := ctx.Cookie("refresh_token")
+    if err != nil {
+        if errors.Is(err, http.ErrNoCookie) {
+            ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "no cookie",
+			})
+            return 
+        }
+
+        ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error1": err.Error(),
+		})
+        return 
+    }
+
+	sessionExists, adminID, err := c.Store.CheckSession(token)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error2": err.Error(),
+		})
+		return
+	}
+
+	if !sessionExists {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error": "session does not exist",
+		})
+		return
+	} else {
+		secret := []byte(os.Getenv("JWT_SECRET"))
+		token, err := utils.CreateJWT(secret, adminID)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error3": err.Error(),
+			})
+			return
+		}
+
+		http.SetCookie(ctx.Writer, &http.Cookie{
+			Name:     "access_token",
+			Value:    token,
+			Expires:  time.Now().Add(600 * time.Second),
+			HttpOnly: true,
+			Path:     "/",
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "renewed",
 	})
 }

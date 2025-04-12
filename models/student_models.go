@@ -3,11 +3,11 @@ package models
 import "time"
 
 type RegisterStudentPayload struct {
-	NewStudent			Students			`json:"student_data" binding:"required"`
-	StudentAcademicData	[]DataAkademik	`json:"student_academic_data" binding:"required"`
+	NewStudent			StudentRegister			`json:"student_data" binding:"required"`
+	StudentAcademicData	[]DataAkademik	`json:"student_academic_data"`
 }
 
-type EditStudentPayload struct {
+type EditStudentPayload struct {	// Unused
 	StudentData	Students	`json:"student_data,omitempty"`
 	StudentAcad	[]DataAkademik	`json:"student_academic_data,omitempty"`
 }
@@ -21,7 +21,8 @@ type Students struct {
 	NoAnggota			string	`json:"no_anggota" binding:"required"`
 	StatusMahasiswa		bool	`json:"status_mahasiswa" binding:"required"`
 	// LembagaPendidikan	string	`json:"lembaga_pendidikan" binding:"required"`
-	Jurusan				string	`json:"jurusan" binding:"required"`
+	// Jurusan				string	`json:"jurusan" binding:"required"`
+	NamaJurusan			string	`json:"nama_jurusan"`
 	BidangUsaha			string	`json:"bidang_usaha"`
 	AlamatUsaha			string	`json:"alamat_usaha"`
 	JenisKelamin		string	`json:"jenis_kelamin" binding:"required"`
@@ -48,6 +49,42 @@ type Students struct {
 	DataAkademik 		[]DataAkademik `gorm:"foreignKey:StudentID"`
 }
 
+type StudentRegister struct {
+	ID        			uint    `gorm:"primaryKey"`
+	Nama      			string  `json:"nama" binding:"required"`
+	Alamat    			string  `json:"alamat" binding:"required"`
+	Email     			string  `json:"email" binding:"required,email"`
+	NomorHP	  			string	`json:"nomor_hp" binding:"required"`
+	NoAnggota			string	`json:"no_anggota" binding:"required"`
+	StatusMahasiswa		bool	`json:"status_mahasiswa" binding:"required"`
+	// LembagaPendidikan	string	`json:"lembaga_pendidikan" binding:"required"`
+	Jurusan				string	`json:"jurusan"`
+	BidangUsaha			string	`json:"bidang_usaha"`
+	AlamatUsaha			string	`json:"alamat_usaha"`
+	JenisKelamin		string	`json:"jenis_kelamin" binding:"required"`
+	TahunMasuk			string	`json:"tahun_masuk" binding:"required"`
+	Semester			string	`json:"semester" binding:"required"`
+	Ktp					string	`json:"ktp" binding:"required"`		// Alamat by KTP
+	AsalDaerah			string	`json:"asal_daerah" binding:"required"`
+	Agama				string	`json:"agama"`
+	AsalSekolah			string	`json:"asal_sekolah" binding:"required"`
+	BahasaAsing			string	`json:"bahasa_asing"`
+	Hobi				string	`json:"hobi"`
+	MediaSosial			string	`json:"media_sosial"`
+	Keterampilan		string	`json:"keterampilan"`
+	NoTelpUsaha			string	`json:"no_telp_usaha"`
+	TempatLahir			string	`json:"tempat_lahir"`
+	TanggalLahir		string	`json:"tanggal_lahir"`
+	LinkMedsos			string	`json:"link_medsos"`
+	FotoPath  			string  `json:"foto_path" binding:"required"`
+	Sarjana				string	`json:"sarjana"`
+	SatuanFK			uint	`json:"satuan_fk"`
+	JurusanFK			uint	`json:"jurusan_fk"`
+	Createdat 			time.Time	`gorm:"autoCreateTime"`
+	// SatuanPendidikan    SatuanPendidikan `gorm:"foreignKey:SatuanFK"`
+	DataAkademik 		[]DataAkademik `gorm:"foreignKey:StudentID"`
+}
+
 type StudentsPayload struct {
 	ID        			*uint    `gorm:"primaryKey,omitempty"`
 	Nama      			*string  `json:"nama,omitempty"`
@@ -57,7 +94,7 @@ type StudentsPayload struct {
 	NoAnggota			*string	`json:"no_anggota,omitempty"`
 	StatusMahasiswa		*bool	`json:"status_mahasiswa,omitempty"`
 	// LembagaPendidikan	string	`json:"lembaga_pendidikan" binding:"required"`
-	Jurusan				*string	`json:"jurusan,omitempty"`
+	NamaJurusan				*string	`json:"nama_jurusan,omitempty"`
 	BidangUsaha			*string	`json:"bidang_usaha,omitempty"`
 	AlamatUsaha			*string	`json:"alamat_usaha,omitempty"`
 	JenisKelamin		*string	`json:"jenis_kelamin,omitempty"`
@@ -87,8 +124,10 @@ type StudentUpdate struct {
 	NomorHP	  			*string	`json:"nomor_hp,omitempty"`
 	NoAnggota			*string	`json:"no_anggota,omitempty"`
 	StatusMahasiswa		*bool	`json:"status_mahasiswa,omitempty"`
-	LembagaPendidikan	*string	`json:"lembaga_pendidikan,omitempty"`
-	Jurusan				*string	`json:"jurusan,omitempty"`
+	// LembagaPendidikan	*string	`json:"lembaga_pendidikan,omitempty"`
+	// Jurusan				*string	`json:"jurusan,omitempty"`
+	SatuanFK			*uint	`json:"satuan_fk,omitempty"`
+	JurusanFK			*uint	`json:"jurusan_fk,omitempty"`
 	BidangUsaha			*string	`json:"bidang_usaha,omitempty"`
 	AlamatUsaha			*string	`json:"alamat_usaha,omitempty"`
 	JenisKelamin		*string	`json:"jenis_kelamin,omitempty"`
@@ -106,19 +145,43 @@ type StudentUpdate struct {
 	TempatLahir			*string	`json:"tempat_lahir,omitempty"`
 	TanggalLahir		*string	`json:"tanggal_lahir,omitempty"`
 	LinkMedsos			*string	`json:"link_medsos,omitempty"`
-	SatuanFK			*int	`json:"satuan_fk,omitempty"`
 	FotoPath  			*string  `json:"foto_path,omitempty"`
 }
 
 type DataAkademik struct {
 	ID        	uint    	`gorm:"primaryKey"`
-	StudentID	uint		`gorm:"index"`
-	Student   	Students 	`gorm:"foreignKey:StudentID;references:ID"`
+	StudentID	uint		`json:"student_id"`
+	// Student   	Students 	`gorm:"foreignKey:StudentID;references:ID"`
+	NamaPrestasi	string	`json:"nama_prestasi"`
 	ContentLink	string		`json:"content_link" binding:"required"`
 	Tipe		string		`json:"tipe" binding:"required"`
 	Createdat 	time.Time	`gorm:"autoCreateTime"`
 }
+
 type SatuanPendidikan struct {
 	ID		uint    	`gorm:"primaryKey"`
 	Satuan	string		`json:"satuan"`
+}
+
+type SatuanPendidikanPayload struct {
+	Satuan	string	`json:"satuan"`
+}
+
+type Jurusan struct {
+	SatuanID	uint	`json:"satuan_id"`
+	NamaJurusan	string	`json:"nama_jurusan"`
+}
+
+type JurusanGet struct {
+	ID			uint	`json:"id"`
+	NamaJurusan	string	`json:"nama_jurusan"`
+}
+
+type FilePayload struct {
+	Extension		string	`json:"extension" binding:"required"`
+	ContentType		string	`json:"content_type" binding:"required"`
+}
+
+type GetFilePayload struct {
+	FileKey		string	`json:"file_key" binding:"required"`
 }

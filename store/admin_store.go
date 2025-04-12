@@ -1,7 +1,9 @@
 package store
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/PatrickA727/trisakti-proto/models"
 	"gorm.io/gorm"
@@ -71,4 +73,21 @@ func (s *AdminStore) RevokeSession (session models.Sessions) error {
     }
 
     return nil
+}
+
+func (s *AdminStore) CheckSession (tokenStr string) (bool, int, error) {
+	var session models.Sessions
+
+    result := s.db.Table("sessions").
+        Select("admin_id").Where("refresh_token = ? AND is_revoked = ? AND expiration > ?", tokenStr, false, time.Now()).
+        First(&session)
+
+    if result.Error != nil {
+        if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+            return false, 0, nil
+        }
+        return false, 0, result.Error
+    }
+
+    return true, session.AdminID, nil
 }

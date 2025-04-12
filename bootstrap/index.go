@@ -47,7 +47,7 @@ func AppBootstrap() {
 	studentController := studentController.NewController(*studentStore)
 	adminController := adminController.NewAdminController(*AdminStore)
 
-	routes.InitRoute(app, *studentController);
+	routes.InitRoute(app, *studentController, *adminController);
 	routes.InitAdminRoute(app, adminController);
 
 	app.Run(PORT);

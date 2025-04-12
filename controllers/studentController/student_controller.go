@@ -3,11 +3,13 @@ package studentController
 import (
 	"net/http"
 	"strconv"
-
 	"github.com/PatrickA727/trisakti-proto/database"
 	"github.com/PatrickA727/trisakti-proto/models"
 	"github.com/PatrickA727/trisakti-proto/store"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"fmt"
+	"github.com/google/uuid"
 )
 
 type StudentControllerStruct struct {
@@ -20,8 +22,50 @@ func NewController (store store.StudentStore) *StudentControllerStruct {
 	}
 }
 
+func generateFileKey(extension string) string {
+	return fmt.Sprintf("students/%s.%s", uuid.New().String(), extension)
+}
+
+
+func (c *StudentControllerStruct) GeneratePresignedUploadURL(ctx *gin.Context) {
+	extension := ctx.Query("extension")
+	contentType := ctx.Query("content_type")
+
+	fileKey := generateFileKey(extension)
+
+	SignedURL, err := c.store.GeneratePresignedPostURL(fileKey, contentType)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error3": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"presigned_url": SignedURL,
+		"fileKey": fileKey,
+	})
+}
+
+func (c *StudentControllerStruct) GeneratePresignedDownloadURL(ctx *gin.Context) {
+	FileKey := ctx.Query("file_key")
+
+	SignedURL, err := c.store.GeneratePresignedGetURL(FileKey)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error3": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"presigned_url": SignedURL,
+	})
+}
+
 func (c *StudentControllerStruct) RegisterStudent(ctx *gin.Context) {
 	var student models.RegisterStudentPayload;
+	var validate = validator.New()
 
 	tx := database.DB.Begin()
 	defer func() {
@@ -37,21 +81,32 @@ func (c *StudentControllerStruct) RegisterStudent(ctx *gin.Context) {
 		return
 	}
 
+	if err := validate.Struct(student); err != nil {
+		errors := err.(validator.ValidationErrors)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": errors.Error(),
+		})
+		return
+	}
+
 	if err := c.store.RegisterStudent(tx, &student.NewStudent); err != nil {
 		tx.Rollback()
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	for _, acadData := range student.StudentAcademicData {
-		acadData.StudentID = student.NewStudent.ID
-		if err := c.store.RegisterStudentAcademics(tx, acadData); err != nil {
-			tx.Rollback()
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-				"error academic": err.Error(),
-			})
+	if student.StudentAcademicData != nil {
+		for _, acadData := range student.StudentAcademicData {
+			acadData.StudentID = student.NewStudent.ID
+			if err := c.store.RegisterStudentAcademics(tx, acadData); err != nil {
+				tx.Rollback()
+				ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+					"error academic": err.Error(),
+				})
+			}
 		}
 	}
+
 
 	tx.Commit()
 	ctx.JSON(http.StatusCreated, "student created")
@@ -76,13 +131,25 @@ func (c *StudentControllerStruct) GetStudentById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, student)
+	acad_data, err := c.store.GetStudentAcademic(id_int)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"student": student,
+		"academic_data": acad_data,
+	})
 }
 
 func (c *StudentControllerStruct) GetAllStudents(ctx *gin.Context) {
 	pageStr := ctx.Query("page")
 	satuan := ctx.Query("satuan")
 	tahunMasuk := ctx.Query("tahun_masuk")
+	nama := ctx.Query("nama")
 	limit := 10
 
 	page, err := strconv.Atoi(pageStr)
@@ -95,7 +162,7 @@ func (c *StudentControllerStruct) GetAllStudents(ctx *gin.Context) {
 
 	offset := (page - 1) * limit
 
-	students, err := c.store.GetStudents(offset, limit, satuan, tahunMasuk)
+	students, count, err := c.store.GetStudents(offset, limit, satuan, tahunMasuk, nama)
 	if err != nil {
 		ctx.AbortWithStatusJSON(500, gin.H {
 			"error": "Error getting students",
@@ -106,11 +173,12 @@ func (c *StudentControllerStruct) GetAllStudents(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H {
 		"students": students,
+		"count": count,
 	})
 }
 
 func (c *StudentControllerStruct) UpdateStudentData(ctx *gin.Context) {
-	var student models.Students;
+	var student models.StudentRegister;
 	var updatedStudent models.StudentUpdate;
 
 	// Get student ID from parameter
@@ -141,7 +209,7 @@ func (c *StudentControllerStruct) UpdateStudentData(ctx *gin.Context) {
 		return
 	}
 
-	updatedResult := database.DB.Model(&student).Updates(updatedStudent)
+	updatedResult := database.DB.Table("students").Model(&student).Updates(updatedStudent)
 	if updatedResult.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"message": "An error occured",
@@ -213,3 +281,147 @@ func (c *StudentControllerStruct) GetAllSatuan(ctx *gin.Context) {
 		"satuan": satuan,
 	})
 }
+
+func (c *StudentControllerStruct) CreateNewSatuan(ctx *gin.Context) {
+	var satuan models.SatuanPendidikanPayload
+
+	if err := ctx.ShouldBindJSON(&satuan); err != nil {  // Binds json payload to the &student model
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, 
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	err := c.store.CreateSatuan(models.SatuanPendidikanPayload{
+		Satuan: satuan.Satuan,
+	})
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "created",
+	})
+}
+
+func (c *StudentControllerStruct) DeleteExistingSatuan(ctx *gin.Context) {
+	satuan_id := ctx.Param("id");
+
+	satuan_id_int, err := strconv.Atoi(satuan_id) // Converts string to int
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = c.store.DeleteSatuanByID(satuan_id_int)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "deleted",
+	})
+}
+
+func (c *StudentControllerStruct) CreateNewJurusan(ctx *gin.Context) {
+	var jurusan models.Jurusan
+
+	if err := ctx.ShouldBindJSON(&jurusan); err != nil {  // Binds json payload to the &student model
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, 
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	err := c.store.CreateJurusan(jurusan)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, 
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "created",
+	})
+}
+
+func (c *StudentControllerStruct) DeleteExistingJurusan(ctx *gin.Context) {
+	jurusan_id := ctx.Param("id");
+
+	jurusan_id_int, err := strconv.Atoi(jurusan_id) // Converts string to int
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = c.store.DeleteJurusanByID(jurusan_id_int)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "deleted",
+	})
+}
+
+func (c *StudentControllerStruct) GetAllJurusanBySatuan(ctx *gin.Context) {
+	satuan_id := ctx.Param("satuan_id");
+
+	satuan_id_int, err := strconv.Atoi(satuan_id) // Converts string to int
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	jurusan, err := c.store.GetJurusanBySatuanID(satuan_id_int)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"jurusan": jurusan,
+	})
+}
+
+func (c *StudentControllerStruct) CreateStudentAchievment(ctx *gin.Context) {
+	var achievment models.DataAkademik
+
+	if err := ctx.ShouldBindJSON(&achievment); err != nil {  // Binds json payload to the &student model
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, 
+			gin.H{"error": err.Error()},
+		)
+		return
+	}
+
+	err := c.store.CreateAchievment(achievment)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "created",
+	})
+}
+
