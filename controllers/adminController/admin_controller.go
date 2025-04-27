@@ -80,7 +80,7 @@ func (c *AdminControllerStruct) Login(ctx *gin.Context) {
 	http.SetCookie(ctx.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    token,
-		Expires:  time.Now().Add(30 * time.Second),
+		Expires:  time.Now().Add(900 * time.Second),
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
@@ -204,7 +204,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
         Secure:   true,  
 		SameSite: http.SameSiteNoneMode,
 	})
-	
+		
 	http.SetCookie(ctx.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",

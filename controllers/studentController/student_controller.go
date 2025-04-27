@@ -1,15 +1,17 @@
 package studentController
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+
 	"github.com/PatrickA727/trisakti-proto/database"
 	"github.com/PatrickA727/trisakti-proto/models"
 	"github.com/PatrickA727/trisakti-proto/store"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type StudentControllerStruct struct {
@@ -209,6 +211,8 @@ func (c *StudentControllerStruct) UpdateStudentData(ctx *gin.Context) {
 		return
 	}
 
+	fmt.Println("DATE: ", updatedStudent.TanggalLahir)
+
 	updatedResult := database.DB.Table("students").Model(&student).Updates(updatedStudent)
 	if updatedResult.Error != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -222,6 +226,90 @@ func (c *StudentControllerStruct) UpdateStudentData(ctx *gin.Context) {
 		"updated student": updatedStudent,
 	})
 
+}
+
+func (c *StudentControllerStruct) UpdateStudentAchievment (ctx *gin.Context) {
+	var updatedAchievment models.DataAkademikUpdate
+
+	idStr := ctx.Param("id");
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	achievment, err := c.store.GetAchievmentByID(id)
+	if err == gorm.ErrRecordNotFound {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "Student not found",
+		})
+		return
+	}
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "An error occurred",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	if err := ctx.ShouldBindJSON(&updatedAchievment); err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "An error occured",
+			"error": err.Error(),
+		})
+		return
+	}
+
+	err = c.store.UpdateAchievment(achievment, updatedAchievment)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "Student achievment updated",
+	})
+}
+
+func (c *StudentControllerStruct) DeleteStudentAchievment (ctx *gin.Context) {
+	idStr := ctx.Param("id");
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	achievment, err := c.store.GetAchievmentByID(id)
+	if err == gorm.ErrRecordNotFound {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{
+			"message": "Student not found",
+		})
+		return
+	}
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "An error occurred",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	err = c.store.DeleteAchievmentByID(int(achievment.ID))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(200, gin.H{
+		"message": "data deleted",
+	})
 }
 
 func (c *StudentControllerStruct) DeleteStudent (ctx *gin.Context) {

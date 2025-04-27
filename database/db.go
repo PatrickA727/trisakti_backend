@@ -18,8 +18,10 @@ func ConnectDB() (*gorm.DB, error) {
     USER := os.Getenv("DB_USER");
     PASS := os.Getenv("DB_PASS");
     NAME := os.Getenv("DB_NAME");
+    HOST := "db"
+    PORT := "5432"
 
-    dsn := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", USER, PASS, NAME);
+    dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", USER, PASS, NAME, HOST, PORT);
 
     DB, connectionError = gorm.Open(postgres.Open(dsn), &gorm.Config{
         NamingStrategy: schema.NamingStrategy{

@@ -1,15 +1,17 @@
 package store
 
 import (
+	"context"
 	"fmt"
-    "context"
-    "os"
-    "time"
-    "github.com/aws/aws-sdk-go-v2/aws"
-    "github.com/aws/aws-sdk-go-v2/service/s3"
+	"os"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	// "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/PatrickA727/trisakti-proto/models"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"gorm.io/gorm"
 )
 
@@ -214,6 +216,39 @@ func (s *StudentStore) GetJurusanBySatuanID(satuan_id int) ([]models.JurusanGet,
 
 func (s *StudentStore) CreateAchievment(data_akademik models.DataAkademik) error {
     err := s.db.Create(&data_akademik).Error
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func (s *StudentStore) GetAchievmentByID(id int) (*models.DataAkademik, error) {
+    var achievment models.DataAkademik
+
+    result := s.db.Table("data_akademik").Where("id = ?", id).Find(&achievment)
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+    return &achievment, nil
+}
+
+func (s *StudentStore) UpdateAchievment (achievment *models.DataAkademik, updatedAchievment models.DataAkademikUpdate) error {
+    err := s.db.Table("data_akademik").Model(&achievment).Updates(updatedAchievment).Error
+	if err != nil {
+		return err
+	}
+
+    return nil
+}
+
+func (s *StudentStore) DeleteAchievmentByID (id int) error {
+    var achievment models.DataAkademik
+    err := s.db.Table("data_akademik").Where("id = ?", id).Delete(&achievment).Error
     if err != nil {
         return err
     }

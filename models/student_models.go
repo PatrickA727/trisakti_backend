@@ -158,6 +158,13 @@ type DataAkademik struct {
 	Createdat 	time.Time	`gorm:"autoCreateTime"`
 }
 
+type DataAkademikUpdate struct {
+	StudentID	uint		`json:"student_id,omitempty"`
+	NamaPrestasi	string	`json:"nama_prestasi,omitempty"`
+	ContentLink	string		`json:"content_link,omitempty"`
+	Tipe		string		`json:"tipe,omitempty"`
+}
+
 type SatuanPendidikan struct {
 	ID		uint    	`gorm:"primaryKey"`
 	Satuan	string		`json:"satuan"`

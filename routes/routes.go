@@ -23,6 +23,8 @@ func InitRoute(app *gin.Engine, c studentController.StudentControllerStruct, a a
 	api.DELETE("/delete-jurusan/:id", utils.WithJWTAuth(c.DeleteExistingJurusan, a.Store));
 	api.GET("/get-jurusan-by-satuan/:satuan_id", utils.WithJWTAuth(c.GetAllJurusanBySatuan, a.Store));
 	api.POST("/create-achievment", utils.WithJWTAuth(c.CreateStudentAchievment, a.Store));
+	api.PATCH("/update-achievment/:id", utils.WithJWTAuth(c.UpdateStudentAchievment, a.Store));
+	api.DELETE("/delete-achievment/:id", utils.WithJWTAuth(c.DeleteStudentAchievment, a.Store));
 	api.GET("/get-presign", utils.WithJWTAuth(c.GeneratePresignedUploadURL, a.Store));
 	api.GET("/get-presign-download", utils.WithJWTAuth(c.GeneratePresignedDownloadURL, a.Store));
 }
