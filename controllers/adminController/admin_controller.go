@@ -84,7 +84,7 @@ func (c *AdminControllerStruct) Login(ctx *gin.Context) {
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 	
 	http.SetCookie(ctx.Writer, &http.Cookie{
@@ -94,7 +94,7 @@ func (c *AdminControllerStruct) Login(ctx *gin.Context) {
 		HttpOnly: true,
 		Path:     "/",
 		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 	
 	ctx.JSON(http.StatusOK, gin.H{
@@ -202,7 +202,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
         Expires:  time.Unix(0, 0), 
         MaxAge:   -1,             
         Secure:   true,  
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 		
 	http.SetCookie(ctx.Writer, &http.Cookie{
@@ -213,7 +213,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
         Expires:  time.Unix(0, 0), 
         MaxAge:   -1,             
         Secure:   true, 
-		SameSite: http.SameSiteNoneMode,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	ctx.JSON(http.StatusOK, gin.H{
@@ -290,7 +290,7 @@ func (c *AdminControllerStruct) RenewAccessToken(ctx *gin.Context) {
 			HttpOnly: true,
 			Path:     "/",
 			Secure:   true,
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteLaxMode,
 		})
 	}
 

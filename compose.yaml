@@ -20,5 +20,26 @@ services:
     env_file:
       - .env
 
+  # frontend:
+  #   build: ../manajemen-mahasiswa
+  #   # ports:
+  #   #   - "5173:80"
+  #   depends_on:
+  #     - backend
+
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    image: nginx:stable-alpine
+    ports:
+      - 80:80
+      # - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # :ro is for setting to read only mode
+      - ../manajemen-mahasiswa/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+      # - frontend
+
 volumes:
   postgres_data:

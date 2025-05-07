@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"log"
 	"os"
-	"time"
+	// "time"
 
-	"github.com/gin-contrib/cors"
+	// "github.com/gin-contrib/cors"
 
 	// "github.com/PatrickA727/trisakti-proto/config/app_config"
 	"github.com/PatrickA727/trisakti-proto/controllers/adminController"
@@ -33,14 +33,14 @@ func AppBootstrap() {
 	}
 	app := gin.Default();	// Returns gin default engine, similar to express app in js 
 	
-	app.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://bkn25q2k-5173.asse.devtunnels.ms/"}, // Change to specific ngrok URL in production
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
-		ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	// app.Use(cors.New(cors.Config{
+	// 	AllowOrigins:     []string{"http://localhost:5173", "https://bkn25q2k-5173.asse.devtunnels.ms/"}, // Change to specific ngrok URL in production
+	// 	AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+	// 	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
+	// 	ExposeHeaders:    []string{"Content-Length", "Set-Cookie"},
+	// 	AllowCredentials: true,
+	// 	MaxAge:           12 * time.Hour,
+	// }))
 
 	studentStore := store.NewStudentStore(db)
 	AdminStore := store.NewAdminStore(db)

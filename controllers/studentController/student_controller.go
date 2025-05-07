@@ -340,21 +340,21 @@ func (c *StudentControllerStruct) DeleteStudent (ctx *gin.Context) {
 	})
 }
 
-func (c *StudentControllerStruct) GetSearchedStudents(ctx *gin.Context) {
-	limitStr := ctx.Query("limit");
-	offsetStr := ctx.Query("offset");
-	// searchStr := ctx.Query("search");
+// func (c *StudentControllerStruct) GetSearchedStudents(ctx *gin.Context) {
+// 	limitStr := ctx.Query("limit");
+// 	offsetStr := ctx.Query("offset");
+// 	// searchStr := ctx.Query("search");
 
-	limit, err := strconv.Atoi(limitStr)
-	if err != nil || limit <= 0 {
-		limit = 10
-	}
+// 	limit, err := strconv.Atoi(limitStr)
+// 	if err != nil || limit <= 0 {
+// 		limit = 10
+// 	}
 
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
-	}
-}
+// 	offset, err := strconv.Atoi(offsetStr)
+// 	if err != nil || offset < 0 {
+// 		offset = 0
+// 	}
+// }
 
 func (c *StudentControllerStruct) GetAllSatuan(ctx *gin.Context) {
 	satuan, err := c.store.GetSatuan()
