@@ -155,13 +155,13 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
 	token, err := ctx.Cookie("refresh_token")
     if err != nil {
         if errors.Is(err, http.ErrNoCookie) {
-            ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+            ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "no cookie",
 			})
             return 
         }
 
-        ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": err.Error(),
 		})
         return 
@@ -169,7 +169,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
 
 	userID, exists := ctx.Get("UserID")
 	if !exists {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "no user in context",
 		})
 		return
@@ -177,7 +177,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
 
 	intID, ok := userID.(int)
 	if !ok {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "incorrect data type for id",
 		})
 		return
@@ -188,7 +188,7 @@ func(c *AdminControllerStruct) Logout(ctx *gin.Context) {
 		RefreshToken: token,
 	})
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -226,14 +226,14 @@ func (c *AdminControllerStruct) AuthCheck(ctx *gin.Context) {
 
 	validToken, err := utils.ValidateJWT(token)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized",
 		})
 		return
 	}
 
 	if !validToken.Valid {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized",
 		})
 		return
@@ -248,13 +248,13 @@ func (c *AdminControllerStruct) RenewAccessToken(ctx *gin.Context) {
 	token, err := ctx.Cookie("refresh_token")
     if err != nil {
         if errors.Is(err, http.ErrNoCookie) {
-            ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+            ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "no cookie",
 			})
             return 
         }
 
-        ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+        ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error1": err.Error(),
 		})
         return 
@@ -262,14 +262,14 @@ func (c *AdminControllerStruct) RenewAccessToken(ctx *gin.Context) {
 
 	sessionExists, adminID, err := c.Store.CheckSession(token)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error2": err.Error(),
 		})
 		return
 	}
 
 	if !sessionExists {
-		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "session does not exist",
 		})
 		return
@@ -286,7 +286,7 @@ func (c *AdminControllerStruct) RenewAccessToken(ctx *gin.Context) {
 		http.SetCookie(ctx.Writer, &http.Cookie{
 			Name:     "access_token",
 			Value:    token,
-			Expires:  time.Now().Add(600 * time.Second),
+			Expires:  time.Now().Add(900 * time.Second),
 			HttpOnly: true,
 			Path:     "/",
 			Secure:   true,

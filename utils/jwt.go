@@ -56,14 +56,14 @@ func WithJWTAuth(handlerFunc gin.HandlerFunc, store store.AdminStore) gin.Handle
 		// Validate JWT
 		token, err := ValidateJWT(tokenString)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error1": err.Error(),
 			})
 			return
 		}
 
 		if !token.Valid {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error2": "invalid token",
 			})
 			return
@@ -84,7 +84,7 @@ func WithJWTAuth(handlerFunc gin.HandlerFunc, store store.AdminStore) gin.Handle
 		// Fetch user by id from database (Check if user exists)
 		u, err := store.GetAdminByID(userID)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error4": err.Error(),
 			})
 			return

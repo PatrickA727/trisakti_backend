@@ -20,13 +20,6 @@ services:
     env_file:
       - .env
 
-  # frontend:
-  #   build: ../manajemen-mahasiswa
-  #   # ports:
-  #   #   - "5173:80"
-  #   depends_on:
-  #     - backend
-
   nginx:
     container_name: nginx
     restart: unless-stopped
