@@ -109,7 +109,6 @@ func (c *StudentControllerStruct) RegisterStudent(ctx *gin.Context) {
 		}
 	}
 
-
 	tx.Commit()
 	ctx.JSON(http.StatusCreated, "student created")
 }
