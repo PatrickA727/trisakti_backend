@@ -44,6 +44,7 @@ type Students struct {
 	Sarjana				string	`json:"sarjana"`
 	Satuan				string	`json:"satuan"`
 	SatuanFK			uint	`json:"satuan_fk"`
+	JurusanFK			uint	`json:"jurusan_fk"`
 	Createdat 			time.Time	`gorm:"autoCreateTime"`
 	// SatuanPendidikan    SatuanPendidikan `gorm:"foreignKey:SatuanFK"`
 	DataAkademik 		[]DataAkademik `gorm:"foreignKey:StudentID"`
